@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Fitness Log</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg: #101216;
+  --surface: #191c21;
+  --surface-hi: #21252c;
+  --line: #2a2f38;
+  --coral: #ff4b3e;
+  --coral-dim: #7a2b26;
+  --teal: #34c9c0;
+  --amber: #ffb648;
+  --text: #ece9e2;
+  --text-dim: #8b909a;
+  --text-faint: #565b64;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background:
+    radial-gradient(1100px 500px at 15% -10%, #1a2c2c 0%, transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, #2a1a1a 0%, transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap{ max-width: 1180px; margin: 0 auto; padding: 24px 18px 70px; }
+
+/* ---------- HEADER ---------- */
+.header{
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px; margin-bottom: 14px;
+  gap: 16px; flex-wrap: wrap;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.14em;
+  color: var(--text-faint); text-transform:uppercase; margin-bottom:2px;
+}
+.wordmark{
+  font-family:'Oswald', sans-serif; font-size:24px; font-weight:600; line-height:1;
+  letter-spacing:0px;
+}
+
+.header-right{ display:flex; align-items:center; gap:10px; }
+
+.io-btn{
+  background:none; border:1px solid var(--line); color:var(--text-dim);
+  font-family:'IBM Plex Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+  padding:7px 12px; border-radius:8px; cursor:pointer;
+}
+.io-btn:hover{ border-color: var(--teal); color: var(--teal); }
+
+.streak-pill{
+  display:flex; align-items:center; gap:8px;
+  background: var(--surface); border:1px solid var(--line);
+  padding:7px 14px; border-radius:999px;
+}
+.streak-pill .flame{ font-size:16px; filter: drop-shadow(0 0 6px rgba(255,150,50,.5)); }
+.streak-pill .num{ font-family:'Oswald', sans-serif; font-size:17px; font-weight:600; }
+.streak-pill .lbl{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--text-dim); text-transform:uppercase; }
+
+/* ---------- TABS ---------- */
+.tab-bar{ display:flex; gap:6px; margin-bottom:18px; }
+.tab-btn{
+  background:none; border:1px solid var(--line); color:var(--text-dim);
+  font-family:'Oswald', sans-serif; font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.05em;
+  padding:8px 16px; border-radius:9px; cursor:pointer;
+}
+.tab-btn.active{ background: var(--surface-hi); color: var(--text); border-color: var(--coral); }
+.tab-btn:hover:not(.active){ border-color: var(--text-dim); color: var(--text); }
+
+/* ---------- LOG GRID ---------- */
+.grid{
+  display:grid; grid-template-columns: repeat(auto-fill, minmax(228px,1fr));
+  gap:10px; margin-bottom: 20px;
+}
+
+.card{
+  background: var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:12px 13px; position:relative; overflow:hidden;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.card.pulse{ animation: cardPulse .4s ease; }
+@keyframes cardPulse{
+  0%{ transform:scale(1); }
+  35%{ transform:scale(1.015); border-color: var(--coral); }
+  100%{ transform:scale(1); }
+}
+
+.card-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+.card-id{ display:flex; align-items:center; gap:7px; min-width:0; }
+.card-emoji{ font-size:17px; flex-shrink:0; }
+.card-name{ font-family:'Oswald', sans-serif; font-weight:600; font-size:13.5px; letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-menu-btn{
+  background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:15px;
+  padding:0 4px; border-radius:6px; line-height:1; flex-shrink:0;
+}
+.card-menu-btn:hover{ color:var(--text); background:var(--surface-hi); }
+
+.card-total{ display:flex; align-items:baseline; gap:6px; margin-bottom:2px; }
+.card-total .num{
+  font-family:'Archivo Black', sans-serif; font-size:24px; color:var(--text);
+  transition: transform .18s ease;
+}
+.card-total .num.bump{ animation: bump .28s ease; }
+@keyframes bump{ 0%{transform:scale(1.3); color:var(--coral);} 100%{transform:scale(1); color:var(--text);} }
+.card-total .unit{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-dim); text-transform:uppercase; }
+.card-sub{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--text-faint); margin-bottom:7px; min-height:13px; }
+
+.tally-strip{ min-height:14px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:5px; align-items:flex-end; }
+.tally-group{ display:flex; gap:2px; align-items:flex-end; }
+.tally-mark{
+  width:2.5px; height:12px; background: var(--teal); border-radius:1px;
+  transform: scaleY(0); transform-origin:bottom; animation: growMark .25s ease forwards;
+}
+.tally-mark.slash{
+  width:13px; height:1.5px; background: var(--coral); margin-left:-11px; margin-bottom:5px;
+  transform: scaleX(0) rotate(-35deg); transform-origin:left; animation: growSlash .22s ease forwards;
+}
+@keyframes growMark{ to{ transform: scaleY(1); } }
+@keyframes growSlash{ to{ transform: scaleX(1) rotate(-35deg); } }
+
+.card-actions{ display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+.preset-btn{
+  flex:1; min-width:44px; background: var(--surface-hi); border:1px solid var(--line);
+  color:var(--text); font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600;
+  padding:7px 4px; border-radius:7px; cursor:pointer; transition: all .12s ease;
+}
+.preset-btn:hover{ border-color: var(--coral); color: var(--coral); }
+.preset-btn:active{ transform: scale(.94); }
+
+.manual-row{ display:flex; gap:5px; }
+.manual-row input{
+  width:0; flex:1; background: var(--surface-hi); border:1px solid var(--line); border-radius:7px;
+  color:var(--text); padding:7px 8px; font-family:'IBM Plex Mono', monospace; font-size:12px;
+}
+.manual-row input:focus{ outline:none; border-color: var(--teal); }
+.manual-row input::placeholder{ color: var(--text-faint); }
+.manual-row button{
+  background:none; border:1px dashed var(--text-dim); color:var(--text-dim);
+  font-family:'IBM Plex Mono', monospace; font-size:12px; padding:7px 10px; border-radius:7px; cursor:pointer;
+  flex-shrink:0;
+}
+.manual-row button:hover{ border-color: var(--teal); color: var(--teal); border-style:solid; }
+
+.add-card{
+  border:1.5px dashed var(--line); background:transparent; display:flex; align-items:center;
+  justify-content:center; cursor:pointer; min-height:150px; color:var(--text-faint);
+  font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:.05em; text-transform:uppercase;
+}
+.add-card:hover{ border-color: var(--teal); color: var(--teal); }
+
+/* ---------- DASHBOARD ---------- */
+.dash-card{ background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; }
+.dash-intro{ font-family:'IBM Plex Mono', monospace; font-size:11px; color: var(--text-faint); margin-bottom:16px; }
+.dash-table{ display:flex; flex-direction:column; gap:8px; overflow-x:auto; padding-bottom:4px; }
+.dash-row{ display:flex; align-items:center; gap:12px; }
+.dash-label{
+  flex:0 0 158px; display:flex; align-items:center; gap:7px; min-width:0;
+  font-family:'Oswald', sans-serif; font-size:12.5px; font-weight:600; color:var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.dash-label .em{ font-size:14px; flex-shrink:0; }
+.dash-cells{ display:flex; gap:2.5px; }
+.dash-cell{ width:11px; height:16px; border-radius:2.5px; background: var(--surface-hi); flex-shrink:0; }
+.dash-today-marker{ box-shadow: inset 0 0 0 1.5px var(--text); }
+.dash-legend{ display:flex; justify-content:flex-end; align-items:center; gap:6px; font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--text-faint); margin-top:14px; }
+.legend-cell{ width:11px; height:11px; border-radius:2.5px; }
+.dash-axis{ display:flex; gap:12px; font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--text-faint); margin-bottom:6px; padding-left:170px; }
+
+/* ---------- TOASTS / FX ---------- */
+#toast-layer{ position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none;}
+.toast{
+  background: var(--surface-hi); border:1px solid var(--coral); color:var(--text);
+  font-family:'Oswald', sans-serif; font-weight:600; font-size:13.5px; letter-spacing:.03em;
+  padding:9px 18px; border-radius:999px; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  animation: toastIn .35s ease, toastOut .35s ease 2.4s forwards;
+}
+@keyframes toastIn{ from{ opacity:0; transform: translateY(-10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes toastOut{ to{ opacity:0; transform: translateY(-10px);} }
+
+.particle{
+  position:fixed; z-index:150; pointer-events:none; border-radius:50%;
+  animation: particleFly .6s ease-out forwards;
+}
+@keyframes particleFly{
+  to{ transform: translate(var(--dx), var(--dy)) scale(0); opacity:0; }
+}
+
+/* ---------- MODAL ---------- */
+.modal-backdrop{
+  position:fixed; inset:0; background: rgba(8,9,11,.72); backdrop-filter: blur(3px);
+  display:flex; align-items:center; justify-content:center; z-index:300; padding:20px;
+}
+.modal{
+  background: var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:22px; width:100%; max-width:380px; max-height:86vh; overflow-y:auto;
+}
+.modal h3{ font-family:'Oswald', sans-serif; margin:0 0 14px; font-size:17px; }
+.field{ margin-bottom:12px; }
+.field label{ display:block; font-family:'IBM Plex Mono', monospace; font-size:9.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; letter-spacing:.06em;}
+.field input{
+  width:100%; background: var(--surface-hi); border:1px solid var(--line); border-radius:8px;
+  color:var(--text); padding:9px 11px; font-family:'Inter',sans-serif; font-size:13.5px;
+}
+.field input:focus{ outline:none; border-color: var(--teal); }
+.field-row{ display:flex; gap:9px; }
+.field-row .field{ flex:1; }
+.checkbox-field{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+.checkbox-field input{ width:auto; }
+.checkbox-field label{ font-family:'Inter',sans-serif; font-size:13px; color:var(--text); text-transform:none; letter-spacing:0; margin:0; }
+.modal-actions{ display:flex; gap:9px; margin-top:14px; }
+.btn{
+  flex:1; padding:10px; border-radius:9px; border:1px solid var(--line); cursor:pointer;
+  font-family:'Oswald', sans-serif; font-weight:600; font-size:12.5px; letter-spacing:.02em; text-transform:uppercase;
+}
+.btn-primary{ background: var(--coral); border-color: var(--coral); color:#1a0a08; }
+.btn-primary:hover{ filter: brightness(1.08); }
+.btn-ghost{ background:none; color:var(--text-dim); }
+.btn-ghost:hover{ color:var(--text); border-color:var(--text-dim); }
+.btn-danger{ background:none; color:var(--coral); border-color: var(--coral-dim); }
+.btn-danger:hover{ background: rgba(255,75,62,.1); }
+
+.footer-note{ text-align:center; color:var(--text-faint); font-family:'IBM Plex Mono', monospace; font-size:10px; margin-top:22px; letter-spacing:.02em; }
+
+@media (max-width:600px){
+  .wordmark{ font-size:19px; }
+  .grid{ grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); }
+  .dash-label{ flex-basis:110px; font-size:11px; }
+  .dash-axis{ padding-left:122px; }
+}
+</style>
+</head>
+<body>
+<div id="toast-layer"></div>
+<div class="wrap" id="app">
+      <div class="header">
+        <div>
+          <div class="eyebrow">Sunday, July 19</div>
+          <div class="wordmark">Daily Fitness Log</div>
+        </div>
+        <div class="header-right">
+          <button class="io-btn" id="saveBtn" title="Save your data into a file you can carry to another computer">Save</button>
+          <div class="streak-pill">
+            <span class="flame">🔥</span>
+            <div>
+              <div class="num">2</div>
+              <div class="lbl">day streak</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="log">Log</button>
+        <button class="tab-btn " data-tab="dashboard">Dashboard</button>
+      </div>
+
+      <div id="tabContent"><div class="grid" id="cardGrid"><div class="card pulse" id="card-run">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🏃</span>
+            <span class="card-name">Miles Run</span>
+          </div>
+          <button class="card-menu-btn" data-menu="run">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num bump" id="num-run">1</span>
+          <span class="unit">mi</span>
+        </div>
+        <div class="card-sub">all-time: 615.3 mi</div>
+        <div class="tally-strip" id="tally-run"><div class="tally-group"><div class="tally-mark"></div></div></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="run" data-amt="0.5">+0.5</button><button class="preset-btn" data-cat="run" data-amt="1">+1</button><button class="preset-btn" data-cat="run" data-amt="3">+3</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-run">
+          
+          <button data-log="run">Log</button>
+        </div>
+      </div><div class="card" id="card-cycle">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🚴</span>
+            <span class="card-name">Miles Cycled</span>
+          </div>
+          <button class="card-menu-btn" data-menu="cycle">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-cycle">0</span>
+          <span class="unit">mi</span>
+        </div>
+        <div class="card-sub">all-time: 4369 mi</div>
+        <div class="tally-strip" id="tally-cycle"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="cycle" data-amt="1">+1</button><button class="preset-btn" data-cat="cycle" data-amt="5">+5</button><button class="preset-btn" data-cat="cycle" data-amt="10">+10</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-cycle">
+          
+          <button data-log="cycle">Log</button>
+        </div>
+      </div><div class="card pulse" id="card-pushups">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">💪</span>
+            <span class="card-name">Push-ups</span>
+          </div>
+          <button class="card-menu-btn" data-menu="pushups">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num bump" id="num-pushups">15</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 75 reps</div>
+        <div class="tally-strip" id="tally-pushups"><div class="tally-group"><div class="tally-mark"></div></div></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="pushups" data-amt="10">+10</button><button class="preset-btn" data-cat="pushups" data-amt="20">+20</button><button class="preset-btn" data-cat="pushups" data-amt="50">+50</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-pushups">
+          
+          <button data-log="pushups">Log</button>
+        </div>
+      </div><div class="card" id="card-pullups">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🧗</span>
+            <span class="card-name">Pull-ups</span>
+          </div>
+          <button class="card-menu-btn" data-menu="pullups">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-pullups">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 0 reps</div>
+        <div class="tally-strip" id="tally-pullups"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="pullups" data-amt="5">+5</button><button class="preset-btn" data-cat="pullups" data-amt="10">+10</button><button class="preset-btn" data-cat="pullups" data-amt="15">+15</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-pullups">
+          
+          <button data-log="pullups">Log</button>
+        </div>
+      </div><div class="card" id="card-curls">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">💪</span>
+            <span class="card-name">Curls</span>
+          </div>
+          <button class="card-menu-btn" data-menu="curls">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-curls">40</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">weight varies · all-time: 65 reps</div>
+        <div class="tally-strip" id="tally-curls"><div class="tally-group"><div class="tally-mark"></div><div class="tally-mark"></div></div></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="curls" data-amt="10">+10</button><button class="preset-btn" data-cat="curls" data-amt="15">+15</button><button class="preset-btn" data-cat="curls" data-amt="20">+20</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="reps" id="manual-amt-curls">
+          <input type="number" step="any" min="0" placeholder="lbs" id="manual-wt-curls" style="max-width:56px;">
+          <button data-log="curls">Log</button>
+        </div>
+      </div><div class="card" id="card-bench">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🏋️</span>
+            <span class="card-name">Bench</span>
+          </div>
+          <button class="card-menu-btn" data-menu="bench">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-bench">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">weight varies · all-time: 0 reps</div>
+        <div class="tally-strip" id="tally-bench"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="bench" data-amt="5">+5</button><button class="preset-btn" data-cat="bench" data-amt="8">+8</button><button class="preset-btn" data-cat="bench" data-amt="10">+10</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="reps" id="manual-amt-bench">
+          <input type="number" step="any" min="0" placeholder="lbs" id="manual-wt-bench" style="max-width:56px;">
+          <button data-log="bench">Log</button>
+        </div>
+      </div><div class="card" id="card-squats">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🦵</span>
+            <span class="card-name">Kettlebell Squats</span>
+          </div>
+          <button class="card-menu-btn" data-menu="squats">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-squats">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 45 reps</div>
+        <div class="tally-strip" id="tally-squats"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="squats" data-amt="10">+10</button><button class="preset-btn" data-cat="squats" data-amt="25">+25</button><button class="preset-btn" data-cat="squats" data-amt="50">+50</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-squats">
+          
+          <button data-log="squats">Log</button>
+        </div>
+      </div><div class="card" id="card-jumpsquats">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🦘</span>
+            <span class="card-name">Jump Squats</span>
+          </div>
+          <button class="card-menu-btn" data-menu="jumpsquats">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-jumpsquats">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 20 reps</div>
+        <div class="tally-strip" id="tally-jumpsquats"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="jumpsquats" data-amt="10">+10</button><button class="preset-btn" data-cat="jumpsquats" data-amt="20">+20</button><button class="preset-btn" data-cat="jumpsquats" data-amt="30">+30</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-jumpsquats">
+          
+          <button data-log="jumpsquats">Log</button>
+        </div>
+      </div><div class="card" id="card-kb">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🔔</span>
+            <span class="card-name">Kettlebell Swings</span>
+          </div>
+          <button class="card-menu-btn" data-menu="kb">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-kb">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 0 reps</div>
+        <div class="tally-strip" id="tally-kb"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="kb" data-amt="10">+10</button><button class="preset-btn" data-cat="kb" data-amt="25">+25</button><button class="preset-btn" data-cat="kb" data-amt="30">+30</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-kb">
+          
+          <button data-log="kb">Log</button>
+        </div>
+      </div><div class="card" id="card-stairs">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🪜</span>
+            <span class="card-name">Stairs Climbed</span>
+          </div>
+          <button class="card-menu-btn" data-menu="stairs">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-stairs">0</span>
+          <span class="unit">floors</span>
+        </div>
+        <div class="card-sub">all-time: 3995 floors</div>
+        <div class="tally-strip" id="tally-stairs"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="stairs" data-amt="5">+5</button><button class="preset-btn" data-cat="stairs" data-amt="10">+10</button><button class="preset-btn" data-cat="stairs" data-amt="20">+20</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-stairs">
+          
+          <button data-log="stairs">Log</button>
+        </div>
+      </div><div class="card" id="card-seals">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🦅</span>
+            <span class="card-name">Burpees</span>
+          </div>
+          <button class="card-menu-btn" data-menu="seals">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-seals">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 2500 reps</div>
+        <div class="tally-strip" id="tally-seals"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="seals" data-amt="10">+10</button><button class="preset-btn" data-cat="seals" data-amt="15">+15</button><button class="preset-btn" data-cat="seals" data-amt="20">+20</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-seals">
+          
+          <button data-log="seals">Log</button>
+        </div>
+      </div><div class="card" id="card-p90x">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🎯</span>
+            <span class="card-name">P90X Reps</span>
+          </div>
+          <button class="card-menu-btn" data-menu="p90x">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-p90x">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 100 reps</div>
+        <div class="tally-strip" id="tally-p90x"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="p90x" data-amt="10">+10</button><button class="preset-btn" data-cat="p90x" data-amt="20">+20</button><button class="preset-btn" data-cat="p90x" data-amt="30">+30</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-p90x">
+          
+          <button data-log="p90x">Log</button>
+        </div>
+      </div><div class="card" id="card-jumpingjacks">
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">🤸</span>
+            <span class="card-name">Jumping Jacks</span>
+          </div>
+          <button class="card-menu-btn" data-menu="jumpingjacks">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-jumpingjacks">0</span>
+          <span class="unit">reps</span>
+        </div>
+        <div class="card-sub">all-time: 100 reps</div>
+        <div class="tally-strip" id="tally-jumpingjacks"></div>
+        <div class="card-actions">
+          <button class="preset-btn" data-cat="jumpingjacks" data-amt="20">+20</button><button class="preset-btn" data-cat="jumpingjacks" data-amt="50">+50</button><button class="preset-btn" data-cat="jumpingjacks" data-amt="100">+100</button>
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="amount (e.g. 3.1)" id="manual-amt-jumpingjacks">
+          
+          <button data-log="jumpingjacks">Log</button>
+        </div>
+      </div><div class="card add-card">+ add category</div></div></div>
+    </div>
+
+<!-- Your data lives here. When you hit Save, this block is updated with your current
+     numbers and the whole file is re-downloaded, so the file you carry to another
+     computer already has everything in it — just open it there, nothing else needed. -->
+<script type="application/json" id="seed-data">{"categories":[{"id":"run","name":"Miles Run","unit":"mi","emoji":"🏃","presets":[0.5,1,3],"trackWeight":false,"baseline":614.3,"_baselineConfirmed":true},{"id":"cycle","name":"Miles Cycled","unit":"mi","emoji":"🚴","presets":[1,5,10],"trackWeight":false,"baseline":4369,"_baselineConfirmed":true},{"id":"pushups","name":"Push-ups","unit":"reps","emoji":"💪","presets":[10,20,50],"trackWeight":false,"baseline":0,"_baselineConfirmed":true},{"id":"pullups","name":"Pull-ups","unit":"reps","emoji":"🧗","presets":[5,10,15],"trackWeight":false,"baseline":0,"_baselineConfirmed":true},{"id":"curls","name":"Curls","unit":"reps","emoji":"💪","presets":[10,15,20],"trackWeight":true,"baseline":0,"_baselineConfirmed":true},{"id":"bench","name":"Bench","unit":"reps","emoji":"🏋️","presets":[5,8,10],"trackWeight":true,"baseline":0,"_baselineConfirmed":true},{"id":"squats","name":"Kettlebell Squats","unit":"reps","emoji":"🦵","presets":[10,25,50],"trackWeight":false,"baseline":0,"_baselineConfirmed":true},{"id":"jumpsquats","name":"Jump Squats","unit":"reps","emoji":"🦘","presets":[10,20,30],"trackWeight":false,"baseline":0,"_baselineConfirmed":true},{"id":"kb","name":"Kettlebell Swings","unit":"reps","emoji":"🔔","presets":[10,25,30],"trackWeight":false,"baseline":0,"_baselineConfirmed":true},{"id":"stairs","name":"Stairs Climbed","unit":"floors","emoji":"🪜","presets":[5,10,20],"trackWeight":false,"baseline":3995,"_baselineConfirmed":true},{"id":"seals","name":"Burpees","unit":"reps","emoji":"🦅","presets":[10,15,20],"trackWeight":false,"baseline":2500,"_baselineConfirmed":true},{"id":"p90x","name":"P90X Reps","unit":"reps","emoji":"🎯","presets":[10,20,30],"trackWeight":false,"baseline":0,"_baselineConfirmed":true},{"id":"jumpingjacks","name":"Jumping Jacks","unit":"reps","emoji":"🤸","presets":[20,50,100],"trackWeight":false,"baseline":0,"_baselineConfirmed":true}],"entries":[{"id":"0z9vac71mrqzzh87","categoryId":"squats","amount":25,"ts":"2026-07-18T23:28:15.607Z"},{"id":"tkmqijkhmrr09mmh","categoryId":"squats","amount":10,"ts":"2026-07-18T23:36:09.161Z"},{"id":"yqzxsb1dmrr09n5s","categoryId":"squats","amount":10,"ts":"2026-07-18T23:36:09.856Z"},{"id":"o5hvy40umrr12ydj","categoryId":"jumpingjacks","amount":50,"ts":"2026-07-18T23:58:57.415Z"},{"id":"kmn5bfbumrr1313a","categoryId":"p90x","amount":30,"ts":"2026-07-18T23:59:00.934Z"},{"id":"1me8vryumrr131mh","categoryId":"p90x","amount":30,"ts":"2026-07-18T23:59:01.625Z"},{"id":"wfwnnrq5mrr132a4","categoryId":"p90x","amount":30,"ts":"2026-07-18T23:59:02.476Z"},{"id":"2muoqth2mrr132zm","categoryId":"p90x","amount":10,"ts":"2026-07-18T23:59:03.394Z"},{"id":"fix60pushupsentry","categoryId":"pushups","amount":60,"ts":"2026-07-18T17:00:00.000Z"},{"id":"okzoh7pimrr1w8x5","categoryId":"jumpingjacks","amount":50,"ts":"2026-07-19T00:21:44.105Z"},{"id":"njdm64qhmrr22kgb","categoryId":"curls","amount":15,"ts":"2026-07-19T00:26:38.987Z"},{"id":"knqsdwegmrr22li4","categoryId":"curls","amount":10,"ts":"2026-07-19T00:26:40.348Z"},{"id":"hje7s51imrr2b15l","categoryId":"jumpsquats","amount":20,"ts":"2026-07-19T00:33:13.881Z"},{"id":"9il3dl27mrsggfah","categoryId":"curls","amount":20,"ts":"2026-07-19T23:57:06.281Z"},{"id":"jugi516jmrsggfr8","categoryId":"curls","amount":20,"ts":"2026-07-19T23:57:06.884Z"},{"id":"jdl4rpjfmrsp1lsj","categoryId":"pushups","amount":15,"ts":"2026-07-20T03:57:31.411Z"},{"id":"atpw4llymrsp1nn0","categoryId":"run","amount":1,"ts":"2026-07-20T03:57:33.804Z"}],"savedAt":"2026-07-20T03:57:38.305Z"}</script>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'daily-fitness-log-state-v1';
+
+  const DEFAULT_CATEGORIES = [
+    { id:'run',        name:'Miles Run',          unit:'mi',     emoji:'🏃', presets:[0.5,1,3],  trackWeight:false, baseline:614.3 },
+    { id:'cycle',      name:'Miles Cycled',       unit:'mi',     emoji:'🚴', presets:[1,5,10],   trackWeight:false, baseline:4369 },
+    { id:'pushups',    name:'Push-ups',           unit:'reps',   emoji:'💪', presets:[10,20,50], trackWeight:false, baseline:0 },
+    { id:'pullups',    name:'Pull-ups',           unit:'reps',   emoji:'🧗', presets:[5,10,15],  trackWeight:false, baseline:0 },
+    { id:'curls',      name:'Curls',              unit:'reps',   emoji:'💪', presets:[10,15,20], trackWeight:true,  baseline:0 },
+    { id:'bench',      name:'Bench',              unit:'reps',   emoji:'🏋️', presets:[5,8,10],   trackWeight:true,  baseline:0 },
+    { id:'squats',     name:'Kettlebell Squats',  unit:'reps',   emoji:'🦵', presets:[10,25,50], trackWeight:false, baseline:0 },
+    { id:'jumpsquats', name:'Jump Squats',        unit:'reps',   emoji:'🦘', presets:[10,20,30], trackWeight:false, baseline:0 },
+    { id:'jumpingjacks', name:'Jumping Jacks',    unit:'reps',   emoji:'🤸', presets:[20,50,100], trackWeight:false, baseline:0 },
+    { id:'kb',         name:'Kettlebell Swings',  unit:'reps',   emoji:'🔔', presets:[10,20,30], trackWeight:false, baseline:0 },
+    { id:'stairs',     name:'Stairs Climbed',     unit:'floors', emoji:'🪜', presets:[5,10,20],  trackWeight:false, baseline:3995 },
+    { id:'seals',      name:'Burpees',            unit:'reps',   emoji:'🦅', presets:[10,15,20], trackWeight:false, baseline:2500 },
+    { id:'p90x',       name:'P90X Reps',          unit:'reps',   emoji:'🎯', presets:[10,20,30], trackWeight:false, baseline:0 }
+  ];
+  function freshDefaultState(){
+    return { categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)), entries: [] };
+  }
+
+  let state = null;
+  let activeTab = 'log';
+  const app = document.getElementById('app');
+  const toastLayer = document.getElementById('toast-layer');
+  const DASH_DAYS = 42;
+
+  function todayStr(d){
+    d = d || new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function dateStrOffset(offsetDays){
+    const d = new Date();
+    d.setDate(d.getDate()+offsetDays);
+    return todayStr(d);
+  }
+  function uid(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+
+  // Entries store an absolute UTC instant (ts). "Which day" an entry belongs to must
+  // always be computed from the LOCAL calendar day, matching todayStr()/dateStrOffset().
+  // Do not use e.ts.slice(0,10) anywhere — that reads the UTC date and silently
+  // disagrees with local time for anyone not at UTC+0, splitting a single local day's
+  // entries across two "days" (this was the pushups-stuck-at-45 bug).
+  function dayKeyOf(iso){
+    return todayStr(new Date(iso));
+  }
+
+  function readSeedData(){
+    try{
+      const el = document.getElementById('seed-data');
+      if(!el) return null;
+      const txt = el.textContent.trim();
+      if(!txt) return null;
+      const parsed = JSON.parse(txt);
+      if(!Array.isArray(parsed.categories) || !Array.isArray(parsed.entries)) return null;
+      return parsed;
+    }catch(e){ return null; }
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const localState = raw ? JSON.parse(raw) : null;
+      const seed = readSeedData();
+
+      if(localState && seed){
+        // Reconcile by recency, not by source: whichever copy was saved more recently wins.
+        // This is what actually caused the "progress wiped" bug — the old code always
+        // trusted local storage over the file's embedded data, even when the file was newer.
+        const localTime = Date.parse(localState.savedAt || 0) || 0;
+        const seedTime = Date.parse(seed.savedAt || 0) || 0;
+        state = seedTime >= localTime ? seed : localState;
+      } else if(seed){
+        state = seed;
+      } else if(localState){
+        state = localState;
+      } else {
+        state = freshDefaultState();
+      }
+
+      if(!Array.isArray(state.categories)) state.categories = freshDefaultState().categories;
+      if(!Array.isArray(state.entries)) state.entries = [];
+      migrateState();
+    }catch(e){
+      console.error('load failed, starting fresh', e);
+      state = freshDefaultState();
+    }
+  }
+
+  // brings a loaded state up to date with the current default category set,
+  // without touching any logged entries
+  function migrateState(){
+    const KNOWN_BASELINES = { run:614.3, cycle:4369, stairs:3995, seals:2500 };
+    state.categories.forEach(c=>{
+      if(typeof c.baseline !== 'number'){
+        c.baseline = KNOWN_BASELINES.hasOwnProperty(c.id) ? KNOWN_BASELINES[c.id] : 0;
+      } else if(c.baseline === 0 && KNOWN_BASELINES.hasOwnProperty(c.id) && !c._baselineConfirmed){
+        c.baseline = KNOWN_BASELINES[c.id];
+      }
+      c._baselineConfirmed = true;
+      if(c.id==='squats' && (c.name==='Air Squats' || c.name==='Bodyweight Squats')) c.name = 'Kettlebell Squats';
+      if(c.id==='seals' && c.name==='Navy SEALs') c.name = 'Burpees';
+    });
+    if(!state.categories.find(c=>c.id==='jumpsquats')){
+      state.categories.push({ id:'jumpsquats', name:'Jump Squats', unit:'reps', emoji:'🦘', presets:[10,20,30], trackWeight:false, baseline:0, _baselineConfirmed:true });
+    }
+    if(!state.categories.find(c=>c.id==='jumpingjacks')){
+      state.categories.push({ id:'jumpingjacks', name:'Jumping Jacks', unit:'reps', emoji:'🤸', presets:[20,50,100], trackWeight:false, baseline:0, _baselineConfirmed:true });
+    }
+    saveState();
+  }
+
+  function saveState(){
+    try{
+      state.savedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){
+      console.error('save failed', e);
+      showToast('⚠ could not save — storage may be full or blocked');
+    }
+  }
+
+  // ---------- derived stats ----------
+  function entriesForDay(dateStr){
+    return state.entries.filter(e=> dayKeyOf(e.ts)===dateStr );
+  }
+  function todayTotalFor(catId){
+    return entriesForDay(todayStr()).filter(e=>e.categoryId===catId).reduce((s,e)=>s+e.amount,0);
+  }
+  function todayLogCountFor(catId){
+    return entriesForDay(todayStr()).filter(e=>e.categoryId===catId).length;
+  }
+  function calcStreak(){
+    const dateSet = new Set(state.entries.map(e=>dayKeyOf(e.ts)));
+    const hasToday = dateSet.has(todayStr());
+    const hasYesterday = dateSet.has(dateStrOffset(-1));
+    if(!hasToday && !hasYesterday) return 0;
+    let streak = 0;
+    let offset = hasToday ? 0 : -1;
+    while(dateSet.has(dateStrOffset(offset))){
+      streak++;
+      offset--;
+    }
+    return streak;
+  }
+  function catDayTotal(catId, dateStr){
+    return state.entries.filter(e=>e.categoryId===catId && dayKeyOf(e.ts)===dateStr)
+      .reduce((s,e)=>s+e.amount,0);
+  }
+  function allTimeTotal(cat){
+    const logged = state.entries.filter(e=>e.categoryId===cat.id).reduce((s,e)=>s+e.amount,0);
+    return (cat.baseline||0) + logged;
+  }
+  // single source of truth for the card sub-line — used on initial render and on
+  // every log so the two can't drift out of sync with each other
+  function buildSubLine(cat){
+    const allTime = allTimeTotal(cat);
+    let subLine = `all-time: ${formatAmount(allTime)} ${cat.unit}`;
+    if(cat.trackWeight){
+      const avg = todayAvgWeight(cat.id);
+      const wtLine = avg!==null ? `avg ${avg} lb today` : (lastWeightFor(cat.id)!==null ? `last used ${lastWeightFor(cat.id)} lb` : 'weight varies');
+      subLine = wtLine + ' · ' + subLine;
+    }
+    return subLine;
+  }
+  function lastWeightFor(catId){
+    const list = state.entries.filter(e=>e.categoryId===catId && typeof e.weight==='number' && e.weight>0);
+    if(list.length===0) return null;
+    return list[list.length-1].weight;
+  }
+  function todayAvgWeight(catId){
+    const list = entriesForDay(todayStr()).filter(e=>e.categoryId===catId && typeof e.weight==='number' && e.weight>0);
+    if(list.length===0) return null;
+    let totalReps=0, weighted=0;
+    list.forEach(e=>{ totalReps += e.amount; weighted += e.amount*e.weight; });
+    return totalReps>0 ? Math.round((weighted/totalReps)*10)/10 : null;
+  }
+
+  function formatAmount(n){
+    return (Math.round(n*100)/100).toString();
+  }
+
+  // ---------- rendering ----------
+  function render(){
+    const streak = calcStreak();
+
+    app.innerHTML = `
+      <div class="header">
+        <div>
+          <div class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'})}</div>
+          <div class="wordmark">Daily Fitness Log</div>
+        </div>
+        <div class="header-right">
+          <button class="io-btn" id="saveBtn" title="Save your data into a file you can carry to another computer">Save</button>
+          <div class="streak-pill">
+            <span class="flame">${streak>0?'🔥':'💤'}</span>
+            <div>
+              <div class="num">${streak}</div>
+              <div class="lbl">day streak</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn ${activeTab==='log'?'active':''}" data-tab="log">Log</button>
+        <button class="tab-btn ${activeTab==='dashboard'?'active':''}" data-tab="dashboard">Dashboard</button>
+      </div>
+
+      <div id="tabContent"></div>
+    `;
+
+    document.getElementById('saveBtn').addEventListener('click', saveToFile);
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ activeTab = btn.dataset.tab; render(); });
+    });
+
+    if(activeTab==='log') renderLogTab();
+    else renderDashboardTab();
+  }
+
+  function renderLogTab(){
+    const content = document.getElementById('tabContent');
+    content.innerHTML = `<div class="grid" id="cardGrid"></div>`;
+    renderCards();
+  }
+
+  function renderCards(){
+    const grid = document.getElementById('cardGrid');
+    grid.innerHTML = '';
+    state.categories.forEach(cat=>{
+      const total = todayTotalFor(cat.id);
+      const logCount = todayLogCountFor(cat.id);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.id = 'card-'+cat.id;
+
+      const tallyHTML = renderTally(logCount);
+      const subLine = buildSubLine(cat);
+
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="card-id">
+            <span class="card-emoji">${cat.emoji}</span>
+            <span class="card-name">${escapeHtml(cat.name)}</span>
+          </div>
+          <button class="card-menu-btn" data-menu="${cat.id}">⋯</button>
+        </div>
+        <div class="card-total">
+          <span class="num" id="num-${cat.id}">${formatAmount(total)}</span>
+          <span class="unit">${escapeHtml(cat.unit)}</span>
+        </div>
+        <div class="card-sub">${subLine}</div>
+        <div class="tally-strip" id="tally-${cat.id}">${tallyHTML}</div>
+        <div class="card-actions">
+          ${cat.presets.map(p=>`<button class="preset-btn" data-cat="${cat.id}" data-amt="${p}">+${formatAmount(p)}</button>`).join('')}
+        </div>
+        <div class="manual-row">
+          <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="${cat.trackWeight?'reps':'amount (e.g. 3.1)'}" id="manual-amt-${cat.id}">
+          ${cat.trackWeight ? `<input type="number" step="any" min="0" placeholder="lbs" id="manual-wt-${cat.id}" style="max-width:56px;">` : ''}
+          <button data-log="${cat.id}">Log</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    const addCard = document.createElement('div');
+    addCard.className = 'card add-card';
+    addCard.textContent = '+ add category';
+    addCard.addEventListener('click', openAddCategoryModal);
+    grid.appendChild(addCard);
+
+    grid.querySelectorAll('.preset-btn').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{
+        const catId = btn.dataset.cat;
+        const cat = state.categories.find(c=>c.id===catId);
+        let weight = null;
+        if(cat && cat.trackWeight){
+          weight = lastWeightFor(catId);
+        }
+        logEntry(catId, parseFloat(btn.dataset.amt), weight, ev);
+      });
+    });
+    grid.querySelectorAll('[data-log]').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{
+        const catId = btn.dataset.log;
+        const amtInput = document.getElementById('manual-amt-'+catId);
+        const wtInput = document.getElementById('manual-wt-'+catId);
+        const amt = parseFloat(amtInput.value);
+        if(isNaN(amt) || amt<=0){ amtInput.style.borderColor='var(--coral)'; return; }
+        const weight = wtInput ? (parseFloat(wtInput.value)||null) : null;
+        logEntry(catId, amt, weight, ev);
+        amtInput.value=''; amtInput.style.borderColor=''; if(wtInput) wtInput.value='';
+      });
+    });
+    grid.querySelectorAll('[data-menu]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openCategoryMenu(btn.dataset.menu));
+    });
+    grid.querySelectorAll('.manual-row input').forEach(inp=>{
+      inp.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){
+          const row = inp.closest('.manual-row');
+          row.querySelector('button').click();
+        }
+      });
+    });
+  }
+
+  function renderTally(count){
+    let html = '';
+    const fullGroups = Math.floor(count/5);
+    const remainder = count % 5;
+    for(let g=0; g<fullGroups; g++){
+      html += '<div class="tally-group">'+
+        [0,1,2,3].map(()=>`<div class="tally-mark"></div>`).join('') +
+        `<div class="tally-mark slash"></div>` +
+      '</div>';
+    }
+    if(remainder>0){
+      html += '<div class="tally-group">'+
+        Array.from({length:remainder}).map(()=>`<div class="tally-mark"></div>`).join('') +
+      '</div>';
+    }
+    return html;
+  }
+
+  function renderDashboardTab(){
+    const content = document.getElementById('tabContent');
+
+    // per-category max day total, for relative shading within that category's own row
+    const maxByCat = {};
+    state.categories.forEach(cat=>{
+      let max = 0;
+      for(let i=0;i<DASH_DAYS;i++){
+        const v = catDayTotal(cat.id, dateStrOffset(-i));
+        if(v>max) max = v;
+      }
+      maxByCat[cat.id] = max;
+    });
+
+    const rowsHTML = state.categories.map(cat=>{
+      const cellsHTML = [];
+      for(let i=0;i<DASH_DAYS;i++){
+        const ds = dateStrOffset(-i);
+        const v = catDayTotal(cat.id, ds);
+        const max = maxByCat[cat.id];
+        let bg = 'var(--surface-hi)';
+        if(max>0 && v>0){
+          const ratio = v/max;
+          if(ratio<=0.33) bg = '#1f4a44';
+          else if(ratio<=0.66) bg = '#1f8a7a';
+          else bg = 'var(--teal)';
+        }
+        const isToday = i===0;
+        const label = `${cat.name} — ${ds}: ${formatAmount(v)} ${cat.unit}`;
+        cellsHTML.push(`<div class="dash-cell${isToday?' dash-today-marker':''}" style="background:${bg}" title="${escapeHtml(label)}"></div>`);
+      }
+      return `
+        <div class="dash-row">
+          <div class="dash-label"><span class="em">${cat.emoji}</span><span>${escapeHtml(cat.name)}</span></div>
+          <div class="dash-cells">${cellsHTML.join('')}</div>
+        </div>
+      `;
+    }).join('');
+
+    content.innerHTML = `
+      <div class="dash-card">
+        <div class="dash-axis"><span>today</span><span style="margin-left:auto;">${DASH_DAYS} days ago</span></div>
+        <div class="dash-table">${rowsHTML}</div>
+        <div class="dash-legend">
+          <span>less</span>
+          <span class="legend-cell" style="background:var(--surface-hi)"></span>
+          <span class="legend-cell" style="background:#1f4a44"></span>
+          <span class="legend-cell" style="background:#1f8a7a"></span>
+          <span class="legend-cell" style="background:var(--teal)"></span>
+          <span>more</span>
+        </div>
+        <div style="margin-top:16px;"><button class="io-btn" id="csvBtn">Export CSV</button></div>
+      </div>
+    `;
+    document.getElementById('csvBtn').addEventListener('click', exportCSV);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------- actions ----------
+  function logEntry(catId, amount, weight, ev){
+    const cat = state.categories.find(c=>c.id===catId);
+    if(!cat) return;
+    const entry = { id: uid(), categoryId: catId, amount, ts: new Date().toISOString() };
+    if(cat.trackWeight && typeof weight === 'number' && weight>0) entry.weight = weight;
+    state.entries.push(entry);
+
+    const numEl = document.getElementById('num-'+catId);
+    if(numEl){
+      numEl.textContent = formatAmount(todayTotalFor(catId));
+      numEl.classList.remove('bump'); void numEl.offsetWidth; numEl.classList.add('bump');
+    }
+    const cardEl = document.getElementById('card-'+catId);
+    if(cardEl){
+      const subEl = cardEl.querySelector('.card-sub');
+      if(subEl){
+        subEl.textContent = buildSubLine(cat);
+      }
+      cardEl.classList.remove('pulse'); void cardEl.offsetWidth; cardEl.classList.add('pulse');
+    }
+    const tallyEl = document.getElementById('tally-'+catId);
+    if(tallyEl) tallyEl.innerHTML = renderTally(todayLogCountFor(catId));
+
+    if(ev && ev.clientX) spawnParticles(ev.clientX, ev.clientY);
+
+    const streak = calcStreak();
+    const streakNum = document.querySelector('.streak-pill .num');
+    if(streakNum) streakNum.textContent = streak;
+    const flame = document.querySelector('.streak-pill .flame');
+    if(flame) flame.textContent = streak>0 ? '🔥' : '💤';
+
+    saveState();
+  }
+
+  function spawnParticles(x,y){
+    const colors = ['#ff4b3e','#ffb648','#34c9c0'];
+    for(let i=0;i<10;i++){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 4+Math.random()*5;
+      p.style.width = size+'px';
+      p.style.height = size+'px';
+      p.style.left = x+'px';
+      p.style.top = y+'px';
+      p.style.background = colors[i%colors.length];
+      const angle = Math.random()*Math.PI*2;
+      const dist = 40+Math.random()*60;
+      p.style.setProperty('--dx', Math.cos(angle)*dist+'px');
+      p.style.setProperty('--dy', Math.sin(angle)*dist+'px');
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(), 650);
+    }
+  }
+
+  function showToast(msg){
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    toastLayer.appendChild(t);
+    setTimeout(()=>t.remove(), 2700);
+  }
+
+  // ---------- export to csv (full history, not limited to the dashboard window) ----------
+  function exportCSV(){
+    try{
+      const rows = [['date','time','category','amount','unit','weight_lbs']];
+      const sorted = [...state.entries].sort((a,b)=> a.ts.localeCompare(b.ts));
+      sorted.forEach(e=>{
+        const cat = state.categories.find(c=>c.id===e.categoryId);
+        const d = new Date(e.ts);
+        const dateStr = dayKeyOf(e.ts);
+        const timeStr = d.toTimeString().slice(0,8);
+        rows.push([
+          dateStr,
+          timeStr,
+          cat ? cat.name : e.categoryId,
+          e.amount,
+          cat ? cat.unit : '',
+          (typeof e.weight==='number') ? e.weight : ''
+        ]);
+      });
+      const csv = rows.map(r=> r.map(cell=>{
+        const s = String(cell);
+        return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+      }).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fitness-log-history-'+todayStr()+'.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('⬇ full history exported as CSV');
+    }catch(e){
+      console.error('csv export failed', e);
+      showToast('⚠ CSV export failed');
+    }
+  }
+
+  // ---------- save-to-file (single button, no import step) ----------
+  function saveToFile(){
+    try{
+      state.savedAt = new Date().toISOString();
+      saveState();
+      const docClone = document.documentElement.cloneNode(true);
+      const seedEl = docClone.querySelector('#seed-data');
+      if(seedEl) seedEl.textContent = JSON.stringify(state);
+      const htmlStr = '<!DOCTYPE html>\n' + docClone.outerHTML;
+      const blob = new Blob([htmlStr], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fitness-log.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('✓ saved — replace your old copy with this download to carry it anywhere');
+    }catch(e){
+      console.error('save failed', e);
+      showToast('⚠ save failed');
+    }
+  }
+
+  // ---------- modals ----------
+  function openModal(innerHTML){
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `<div class="modal">${innerHTML}</div>`;
+    backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) backdrop.remove(); });
+    document.body.appendChild(backdrop);
+    return backdrop;
+  }
+
+  function openAddCategoryModal(){
+    const backdrop = openModal(`
+      <h3>New Category</h3>
+      <div class="field-row">
+        <div class="field" style="flex:0 0 64px;">
+          <label>Icon</label>
+          <input type="text" id="newEmoji" maxlength="2" value="🏋️" placeholder="🏋️">
+        </div>
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="newName" placeholder="e.g. Burpees">
+        </div>
+      </div>
+      <div class="field">
+        <label>Unit</label>
+        <input type="text" id="newUnit" placeholder="reps / mi / floors">
+      </div>
+      <div class="field">
+        <label>Quick-add amounts (comma separated, decimals ok)</label>
+        <input type="text" id="newPresets" placeholder="10, 20, 50">
+      </div>
+      <div class="checkbox-field">
+        <input type="checkbox" id="newTrackWeight">
+        <label for="newTrackWeight">Weight varies (track lbs per entry)</label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="cancelAdd">Cancel</button>
+        <button class="btn btn-primary" id="confirmAdd">Create</button>
+      </div>
+    `);
+    backdrop.querySelector('#newName').focus();
+    backdrop.querySelector('#cancelAdd').addEventListener('click', ()=>backdrop.remove());
+    backdrop.querySelector('#confirmAdd').addEventListener('click', ()=>{
+      const name = backdrop.querySelector('#newName').value.trim();
+      const unit = backdrop.querySelector('#newUnit').value.trim() || 'count';
+      const emoji = backdrop.querySelector('#newEmoji').value.trim() || '⭐';
+      const trackWeight = backdrop.querySelector('#newTrackWeight').checked;
+      const presetsRaw = backdrop.querySelector('#newPresets').value.trim();
+      let presets = presetsRaw.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n) && n>0);
+      if(presets.length===0) presets = [1,5,10];
+      if(!name) { backdrop.querySelector('#newName').style.borderColor='var(--coral)'; return; }
+      state.categories.push({ id: uid(), name, unit, emoji, presets: presets.slice(0,4), trackWeight, baseline:0, _baselineConfirmed:true });
+      saveState();
+      backdrop.remove();
+      render();
+    });
+  }
+
+  function openCategoryMenu(catId){
+    const cat = state.categories.find(c=>c.id===catId);
+    const lastEntry = [...state.entries].reverse().find(e=>e.categoryId===catId);
+    const backdrop = openModal(`
+      <h3>${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</h3>
+      <div class="field">
+        <label>Rename</label>
+        <input type="text" id="editName" value="${escapeHtml(cat.name)}">
+      </div>
+      <div class="field">
+        <label>Quick-add amounts</label>
+        <input type="text" id="editPresets" value="${cat.presets.join(', ')}">
+      </div>
+      <div class="field">
+        <label>Lifetime baseline (effort before this app — not counted in streak/history)</label>
+        <input type="number" step="any" id="editBaseline" value="${cat.baseline||0}">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="closeMenu">Close</button>
+        <button class="btn btn-primary" id="saveEdits">Save</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="undoLast" ${lastEntry?'':'disabled'}>Undo last entry</button>
+        <button class="btn btn-danger" id="deleteCat">Delete category</button>
+      </div>
+    `);
+    backdrop.querySelector('#closeMenu').addEventListener('click', ()=>backdrop.remove());
+    backdrop.querySelector('#saveEdits').addEventListener('click', ()=>{
+      const newName = backdrop.querySelector('#editName').value.trim();
+      const presetsRaw = backdrop.querySelector('#editPresets').value.trim();
+      const baselineVal = parseFloat(backdrop.querySelector('#editBaseline').value);
+      let presets = presetsRaw.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n) && n>0);
+      if(newName) cat.name = newName;
+      if(presets.length>0) cat.presets = presets.slice(0,4);
+      cat.baseline = isNaN(baselineVal) ? 0 : baselineVal;
+      cat._baselineConfirmed = true;
+      saveState();
+      backdrop.remove();
+      render();
+    });
+    backdrop.querySelector('#undoLast').addEventListener('click', ()=>{
+      if(lastEntry){
+        state.entries = state.entries.filter(e=>e.id!==lastEntry.id);
+        saveState();
+        render();
+      }
+      backdrop.remove();
+    });
+    backdrop.querySelector('#deleteCat').addEventListener('click', ()=>{
+      state.categories = state.categories.filter(c=>c.id!==catId);
+      state.entries = state.entries.filter(e=>e.categoryId!==catId);
+      saveState();
+      backdrop.remove();
+      render();
+    });
+  }
+
+  // ---------- init ----------
+  loadState();
+  render();
+
+})();
+</script>
+
+
+</body></html>
