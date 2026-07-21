@@ -745,13 +745,15 @@ body{
   }
 
   // ---------- rendering ----------
+  const BUILD_VERSION = '2026-07-20-b';
+
   function render(){
     const streak = calcStreak();
 
     app.innerHTML = `
       <div class="header">
         <div>
-          <div class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'})}</div>
+          <div class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'})} · build ${BUILD_VERSION}</div>
           <div class="wordmark">Daily Fitness Log</div>
         </div>
         <div class="header-right">
@@ -1013,18 +1015,19 @@ body{
   }
 
   // ---------- export to csv (full history, not limited to the dashboard window) ----------
-  // Delivers a file to the user. Tries the native Share Sheet first (works from a
-  // regular Safari tab; may or may not work from an iOS home-screen "standalone" app —
-  // Apple's support for file-sharing there is inconsistent). Falls back to a normal
-  // download link if sharing isn't available or fails. Shows a toast naming which path
-  // ran, so we can actually see what's happening on-device instead of guessing.
+  // Delivers a file to the user.
+  //
+  // In a normal Safari tab, we use the plain <a download> link — this already worked
+  // reliably (confirmed), so it's left untouched and Web Share is never attempted there.
+  //
+  // In an iOS home-screen "standalone" app, <a download> doesn't reliably trigger a
+  // save, so we try the native Share Sheet (navigator.share with files) instead, with
+  // a toast reporting what happened so we can see what iOS is actually doing.
   async function deliverFile(filename, mimeType, contents){
     const isStandalone = window.navigator.standalone === true ||
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 
-    if(!navigator.share){
-      showToast('ℹ no share support — using download (' + (isStandalone?'standalone':'browser') + ')', 5000);
-    } else {
+    if(isStandalone && navigator.share){
       for(const tryType of [mimeType, 'application/octet-stream']){
         try{
           const file = new File([contents], filename, {type: tryType});
@@ -1040,7 +1043,7 @@ body{
           // this MIME type didn't work for sharing — try the next one
         }
       }
-      showToast('ℹ share unavailable here — using download (' + (isStandalone?'standalone':'browser') + ')', 5000);
+      showToast('ℹ share sheet unavailable — trying download instead', 5000);
     }
 
     try{
@@ -1053,6 +1056,9 @@ body{
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      if(isStandalone){
+        showToast('ℹ if nothing appeared, try this in a plain Safari tab', 5000);
+      }
       return true;
     }catch(e){
       console.error('download fallback failed', e);
