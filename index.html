@@ -183,9 +183,6 @@ body{
 
 /* ---------- TOASTS / FX ---------- */
 #toast-layer{ position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none;}
-/* TEMP debugging aid — delete this rule, the #debug-badge div above, and its one line
-   of JS (search BUILD_VERSION) once we're done troubleshooting the save issue. */
-#debug-badge{ position:fixed; bottom:8px; right:10px; z-index:500; font-family:'IBM Plex Mono', monospace; font-size:9px; color:var(--text-faint); opacity:.6; pointer-events:none; }
 .toast{
   background: var(--surface-hi); border:1px solid var(--coral); color:var(--text);
   font-family:'Oswald', sans-serif; font-weight:600; font-size:13.5px; letter-spacing:.03em;
@@ -249,7 +246,6 @@ body{
 </head>
 <body>
 <div id="toast-layer"></div>
-<div id="debug-badge"></div>
 <div class="wrap" id="app">
       <div class="header">
         <div>
@@ -752,7 +748,6 @@ body{
   }
 
   // ---------- rendering ----------
-  const BUILD_VERSION = '2026-07-20-c';
 
   function render(){
     const streak = calcStreak();
@@ -1021,38 +1016,8 @@ body{
     setTimeout(()=>t.remove(), durationMs || 2700);
   }
 
-  // ---------- export to csv (full history, not limited to the dashboard window) ----------
-  // Delivers a file to the user.
-  //
-  // In a normal Safari tab, we use the plain <a download> link — this already worked
-  // reliably (confirmed), so it's left untouched and Web Share is never attempted there.
-  //
-  // In an iOS home-screen "standalone" app, <a download> doesn't reliably trigger a
-  // save, so we try the native Share Sheet (navigator.share with files) instead, with
-  // a toast reporting what happened so we can see what iOS is actually doing.
-  async function deliverFile(filename, mimeType, contents){
-    const isStandalone = window.navigator.standalone === true ||
-      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-
-    if(isStandalone && navigator.share){
-      for(const tryType of [mimeType, 'application/octet-stream']){
-        try{
-          const file = new File([contents], filename, {type: tryType});
-          if(navigator.canShare && navigator.canShare({files:[file]})){
-            await navigator.share({files:[file], title: filename});
-            return true;
-          }
-        }catch(e){
-          if(e && e.name === 'AbortError'){
-            showToast('cancelled');
-            return false;
-          }
-          // this MIME type didn't work for sharing — try the next one
-        }
-      }
-      showToast('ℹ share sheet unavailable — trying download instead', 5000);
-    }
-
+  // Delivers a file to the user as a normal browser download.
+  function deliverFile(filename, mimeType, contents){
     try{
       const blob = new Blob([contents], {type: mimeType});
       const url = URL.createObjectURL(blob);
@@ -1063,13 +1028,10 @@ body{
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      if(isStandalone){
-        showToast('ℹ if nothing appeared, try this in a plain Safari tab', 5000);
-      }
       return true;
     }catch(e){
-      console.error('download fallback failed', e);
-      showToast('⚠ save failed entirely — try opening this site in a plain Safari tab instead of the home screen icon', 6000);
+      console.error('download failed', e);
+      showToast('⚠ save failed');
       return false;
     }
   }
@@ -1096,9 +1058,9 @@ body{
         const s = String(cell);
         return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
       }).join(',')).join('\n');
-      deliverFile('fitness-log-history-'+todayStr()+'.csv', 'text/csv', csv).then(ok=>{
-        if(ok) showToast('⬇ full history exported as CSV');
-      });
+      if(deliverFile('fitness-log-history-'+todayStr()+'.csv', 'text/csv', csv)){
+        showToast('⬇ full history exported as CSV');
+      }
     }catch(e){
       console.error('csv export failed', e);
       showToast('⚠ CSV export failed');
@@ -1114,9 +1076,9 @@ body{
       const seedEl = docClone.querySelector('#seed-data');
       if(seedEl) seedEl.textContent = JSON.stringify(state);
       const htmlStr = '<!DOCTYPE html>\n' + docClone.outerHTML;
-      deliverFile('fitness-log.html', 'text/html', htmlStr).then(ok=>{
-        if(ok) showToast('✓ saved — replace your old copy with this to carry it anywhere');
-      });
+      if(deliverFile('fitness-log.html', 'text/html', htmlStr)){
+        showToast('✓ saved — replace your old copy with this to carry it anywhere');
+      }
     }catch(e){
       console.error('save failed', e);
       showToast('⚠ save failed');
@@ -1241,8 +1203,6 @@ body{
   // ---------- init ----------
   loadState();
   render();
-  const badgeEl = document.getElementById('debug-badge'); // TEMP — see note above #debug-badge CSS
-  if(badgeEl) badgeEl.textContent = 'build ' + BUILD_VERSION;
 
 })();
 </script>
