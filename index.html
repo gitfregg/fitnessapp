@@ -1013,6 +1013,40 @@ body{
   }
 
   // ---------- export to csv (full history, not limited to the dashboard window) ----------
+  // Delivers a file to the user. Prefers the native Share Sheet (navigator.share with
+  // files) since that's the only mechanism that reliably works from an iOS home-screen
+  // "standalone" app — the <a download> trick below is silently unreliable there because
+  // standalone mode has no download manager. Regular browser tabs (desktop, Android,
+  // Safari-not-standalone) fall back to the normal download link.
+  async function deliverFile(filename, mimeType, contents){
+    try{
+      const file = new File([contents], filename, {type: mimeType});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title: filename});
+        return true;
+      }
+    }catch(e){
+      // user cancelled the share sheet, or share failed — fall through to download link
+      if(e && e.name === 'AbortError') return false;
+      console.error('share failed, falling back to download', e);
+    }
+    try{
+      const blob = new Blob([contents], {type: mimeType});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      return true;
+    }catch(e){
+      console.error('download fallback failed', e);
+      return false;
+    }
+  }
+
   function exportCSV(){
     try{
       const rows = [['date','time','category','amount','unit','weight_lbs']];
@@ -1035,16 +1069,9 @@ body{
         const s = String(cell);
         return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
       }).join(',')).join('\n');
-      const blob = new Blob([csv], {type:'text/csv'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'fitness-log-history-'+todayStr()+'.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast('⬇ full history exported as CSV');
+      deliverFile('fitness-log-history-'+todayStr()+'.csv', 'text/csv', csv).then(ok=>{
+        if(ok) showToast('⬇ full history exported as CSV');
+      });
     }catch(e){
       console.error('csv export failed', e);
       showToast('⚠ CSV export failed');
@@ -1060,16 +1087,9 @@ body{
       const seedEl = docClone.querySelector('#seed-data');
       if(seedEl) seedEl.textContent = JSON.stringify(state);
       const htmlStr = '<!DOCTYPE html>\n' + docClone.outerHTML;
-      const blob = new Blob([htmlStr], {type:'text/html'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'fitness-log.html';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast('✓ saved — replace your old copy with this download to carry it anywhere');
+      deliverFile('fitness-log.html', 'text/html', htmlStr).then(ok=>{
+        if(ok) showToast('✓ saved — replace your old copy with this to carry it anywhere');
+      });
     }catch(e){
       console.error('save failed', e);
       showToast('⚠ save failed');
