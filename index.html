@@ -1004,37 +1004,45 @@ body{
     }
   }
 
-  function showToast(msg){
+  function showToast(msg, durationMs){
     const t = document.createElement('div');
     t.className = 'toast';
     t.textContent = msg;
     toastLayer.appendChild(t);
-    setTimeout(()=>t.remove(), 2700);
+    setTimeout(()=>t.remove(), durationMs || 2700);
   }
 
   // ---------- export to csv (full history, not limited to the dashboard window) ----------
-  // Delivers a file to the user. Prefers the native Share Sheet (navigator.share with
-  // files) since that's the only mechanism that reliably works from an iOS home-screen
-  // "standalone" app — the <a download> trick below is silently unreliable there because
-  // standalone mode has no download manager. Regular browser tabs (desktop, Android,
-  // Safari-not-standalone) fall back to the normal download link.
-  //
-  // Note: the file is shared as application/octet-stream regardless of its real type.
-  // iOS treats text/html as "a webpage to open/preview" and deprioritizes "Save to
-  // Files" in that case; a generic binary type makes it treat the file as a plain
-  // document instead, which is what actually surfaces "Save to Files" reliably.
+  // Delivers a file to the user. Tries the native Share Sheet first (works from a
+  // regular Safari tab; may or may not work from an iOS home-screen "standalone" app —
+  // Apple's support for file-sharing there is inconsistent). Falls back to a normal
+  // download link if sharing isn't available or fails. Shows a toast naming which path
+  // ran, so we can actually see what's happening on-device instead of guessing.
   async function deliverFile(filename, mimeType, contents){
-    try{
-      const file = new File([contents], filename, {type: 'application/octet-stream'});
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        await navigator.share({files:[file], title: filename});
-        return true;
+    const isStandalone = window.navigator.standalone === true ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+    if(!navigator.share){
+      showToast('ℹ no share support — using download (' + (isStandalone?'standalone':'browser') + ')', 5000);
+    } else {
+      for(const tryType of [mimeType, 'application/octet-stream']){
+        try{
+          const file = new File([contents], filename, {type: tryType});
+          if(navigator.canShare && navigator.canShare({files:[file]})){
+            await navigator.share({files:[file], title: filename});
+            return true;
+          }
+        }catch(e){
+          if(e && e.name === 'AbortError'){
+            showToast('cancelled');
+            return false;
+          }
+          // this MIME type didn't work for sharing — try the next one
+        }
       }
-    }catch(e){
-      // user cancelled the share sheet, or share failed — fall through to download link
-      if(e && e.name === 'AbortError') return false;
-      console.error('share failed, falling back to download', e);
+      showToast('ℹ share unavailable here — using download (' + (isStandalone?'standalone':'browser') + ')', 5000);
     }
+
     try{
       const blob = new Blob([contents], {type: mimeType});
       const url = URL.createObjectURL(blob);
@@ -1048,6 +1056,7 @@ body{
       return true;
     }catch(e){
       console.error('download fallback failed', e);
+      showToast('⚠ save failed entirely — try opening this site in a plain Safari tab instead of the home screen icon', 6000);
       return false;
     }
   }
