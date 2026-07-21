@@ -1018,9 +1018,14 @@ body{
   // "standalone" app — the <a download> trick below is silently unreliable there because
   // standalone mode has no download manager. Regular browser tabs (desktop, Android,
   // Safari-not-standalone) fall back to the normal download link.
+  //
+  // Note: the file is shared as application/octet-stream regardless of its real type.
+  // iOS treats text/html as "a webpage to open/preview" and deprioritizes "Save to
+  // Files" in that case; a generic binary type makes it treat the file as a plain
+  // document instead, which is what actually surfaces "Save to Files" reliably.
   async function deliverFile(filename, mimeType, contents){
     try{
-      const file = new File([contents], filename, {type: mimeType});
+      const file = new File([contents], filename, {type: 'application/octet-stream'});
       if(navigator.canShare && navigator.canShare({files:[file]})){
         await navigator.share({files:[file], title: filename});
         return true;
